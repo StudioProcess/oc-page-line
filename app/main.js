@@ -1,3 +1,5 @@
+import * as gui from './gui.js';
+
 const W = 1280;
 const H = 800;
 
@@ -8,6 +10,13 @@ let line, lineGeo, lineMat;
 
 let page = 0;
 
+export let params = {
+  start:[0,0], 
+  startAngle:45, 
+  stepAngle:10, 
+  stepLength:1
+};
+
 (async function main() {  
   
   await setup(); // set up scene
@@ -17,6 +26,8 @@ let page = 0;
 
 
 async function setup() {
+  gui.create();
+  
   buf = await readFile('app/alice30.txt');
   // console.log(buf);
 
@@ -76,6 +87,7 @@ async function hashPage(n, charsPerPage = 3000) {
     .then(buf => bufferToBinary(buf));
 }
 
+
 function bufferToBinary(buf) {
   let arr = new Uint8Array(buf);
   console.log(arr);
@@ -86,6 +98,7 @@ function bufferToBinary(buf) {
     return acc;
   }, []);
 }
+
 
 function createLineGeo(bits, opts = { start:[0,0], startAngle:45, stepAngle:10, stepLength:1 }) {
   let geo = new THREE.Geometry();
@@ -105,17 +118,19 @@ function createLineGeo(bits, opts = { start:[0,0], startAngle:45, stepAngle:10, 
 }
 
 
-
 async function setGeoForPage(n) {
   let bits = await hashPage(n);
-  lineGeo = createLineGeo(bits);
+  lineGeo = createLineGeo(bits, params);
   line.geometry = lineGeo;
   console.log(bits);
 }
 
-
 function setPage(n) {
   if (n < 0) { n = 0; }
   page = n;
+  setGeoForPage(page);
+}
+
+export function updateLine() {
   setGeoForPage(page);
 }
