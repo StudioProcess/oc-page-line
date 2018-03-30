@@ -37,6 +37,7 @@ async function setup() {
   });
   renderer.setSize( W, H );
   renderer.setPixelRatio( window.devicePixelRatio );
+  console.log(renderer);
   document.body.appendChild( renderer.domElement );
   
   scene = new THREE.Scene();
@@ -81,7 +82,7 @@ async function readFile(name) {
 }
 
 
-async function hashPage(n, charsPerPage = 3000) {
+async function hashPage(n, charsPerPage = 100) {
   let data = buf.slice( n*charsPerPage, (n+1)*charsPerPage );
   return crypto.subtle.digest('SHA-256', data)
     .then(buf => bufferToBinary(buf));
@@ -117,12 +118,11 @@ function createLineGeo(bits, opts = { start:[0,0], startAngle:45, stepAngle:10, 
   return geo;
 }
 
-
 async function setGeoForPage(n) {
   let bits = await hashPage(n);
   lineGeo = createLineGeo(bits, params);
   line.geometry = lineGeo;
-  console.log(bits);
+  console.log(bits) ;
 }
 
 function setPage(n) {
