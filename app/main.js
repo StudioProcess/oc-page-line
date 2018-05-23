@@ -11,6 +11,7 @@ let line, lineGeo, lineMat;
 let page = 0;
 
 export let params = {
+  color: 0x0f72ff,
   start:[0,0], 
   startAngle:45, 
   stepAngle:10, 
@@ -46,7 +47,7 @@ async function setup() {
   controls.enableKeys = false;
   camera.position.z = 192;
 
-  lineMat = new THREE.LineBasicMaterial({ color: 0xff1050 });
+  lineMat = new THREE.LineBasicMaterial({ color:params.color });
   let lineGeo = new THREE.Geometry();
   line = new THREE.Line( lineGeo, lineMat );
   scene.add( line );
@@ -133,4 +134,5 @@ function setPage(n) {
 
 export function updateLine() {
   setGeoForPage(page);
+  lineMat.color = new THREE.Color(params.color);
 }
