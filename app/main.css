@@ -12,7 +12,14 @@ body {
 }
 
 canvas {
-  width: 100% !important;
+  width: 100vw !important;
   height: auto !important;
   background-color: white;
+}
+
+@media (min-aspect-ratio: 16/10) {
+  canvas {
+    width: auto !important;
+    height: 100vh !important;
+  }
 }
