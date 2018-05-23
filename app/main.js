@@ -18,7 +18,7 @@ export let params = {
   stepLength:1
 };
 
-(async function main() {  
+(async function main() {
   
   await setup(); // set up scene
   loop(); // start game loop
@@ -76,6 +76,18 @@ document.addEventListener('keydown', e => {
   else if (e.keyCode == 39) { setPage(page+1); } 
   else if (e.keyCode == 37) { setPage(page-1); }
 });
+
+
+(function setupAspectSwitch() {
+  const handler = e => {
+    const body = document.querySelector('body');
+    if (e.matches) body.classList.add('wide');
+    else body.classList.remove('wide');
+  };
+  const mq = window.matchMedia(`(min-aspect-ratio:${W}/${H})`);
+  mq.addListener(handler);
+  handler(mq);
+})();
 
 
 async function readFile(name) {

@@ -17,9 +17,7 @@ canvas {
   background-color: white;
 }
 
-@media (min-aspect-ratio: 16/10) {
-  canvas {
-    width: auto !important;
-    height: 100vh !important;
-  }
+body.wide canvas {
+  width: auto !important;
+  height: 100vh !important;
 }
