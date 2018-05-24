@@ -6,16 +6,17 @@ const H = 800;
 let renderer, scene, camera;
 let controls; // eslint-disable-line no-unused-vars
 let buf;
-let line, lineGeo, lineMat;
+let line, lineMat;
 
-let page = 0;
+let pages = 3;
+// let page = 0;
 
 export let params = {
   color: 0x0f72ff,
   start:[0,0], 
   startAngle:45, 
   stepAngle:10, 
-  length:256
+  length:100
 };
 
 (async function main() {
@@ -48,11 +49,10 @@ async function setup() {
   camera.position.z = 192;
 
   lineMat = new THREE.LineBasicMaterial({ color:params.color });
-  let lineGeo = new THREE.Geometry();
-  line = new THREE.Line( lineGeo, lineMat );
+  line = await getLineForBook(pages, lineMat);
+  formatLine();
   scene.add( line );
-  
-  setGeoForPage(page);
+
 }
 
 
@@ -73,8 +73,8 @@ document.addEventListener('keydown', e => {
     } else { document.webkitExitFullscreen(); }
   }
   
-  else if (e.keyCode == 39) { setPage(page+1); } 
-  else if (e.keyCode == 37) { setPage(page-1); }
+  // else if (e.keyCode == 39) { setPage(page+1); } 
+  // else if (e.keyCode == 37) { setPage(page-1); }
 });
 
 
@@ -130,24 +130,62 @@ function createLineGeo(bits, opts = { stepAngle:10, length:256 }) {
     p.add(d);
     geo.vertices.push(p.clone());
   }
-  geo.lastVertex = p; // Save last vertex for convenience
+  geo.lastPosition = p; // Save last vertex position for convenience
+  geo.lastAngleRad = a / 360 * Math.PI * 2;
   return geo;
 }
 
-async function setGeoForPage(n) {
-  let bits = await hashPage(n);
-  lineGeo = createLineGeo(bits, params);
-  line.geometry = lineGeo;
-  console.log(bits) ;
+// async function setGeoForPage(n) {
+//   let bits = await hashPage(n);
+//   lineGeo = createLineGeo(bits, params);
+//   line.geometry = lineGeo;
+//   console.log(bits) ;
+// }
+
+async function getGeoForPage(n, totalPages=pages) {
+  console.log(buf);
+  let bits = await hashPage(n, Math.floor(buf.byteLength/totalPages));
+  return createLineGeo(bits, params);
 }
 
-function setPage(n) {
-  if (n < 0) { n = 0; }
-  page = n;
-  setGeoForPage(page);
+// TODO: fix continueAngle feature
+function formatLine(opts = { join:true, gap:1, continueAngle:false }) {
+  let position = new THREE.Vector3();
+  let angle = 0;
+  let lastGeo;
+  line.children.forEach(segment => {
+    if (lastGeo) {
+      if (opts.continueAngle) { angle += lastGeo.lastAngleRad; }
+      else { angle = lastGeo.lastAngleRad; }
+      if (opts.join) {
+        // position.add( lastGeo.lastPosition.clone().applyEuler(new THREE.Euler(0,0,angle)) );
+        position.add(lastGeo.lastPosition);
+        position.add(new THREE.Vector3(opts.gap*Math.cos(angle),opts.gap*Math.sin(angle),0));
+      }
+    }
+    segment.position.set(position.x, position.y, position.z);
+    if (opts.continueAngle) { segment.rotateZ(angle); }
+    lastGeo = segment.geometry;
+  });
 }
+
+async function getLineForBook(totalPages, material) {
+  let line = new THREE.Object3D();
+  for (let i=0; i<totalPages; i++) {
+    let geo = await getGeoForPage(i, totalPages);
+    let segment = new THREE.Line( geo, material );
+    line.add(segment);
+  }
+  return line;
+}
+
+// function setPage(n) {
+//   if (n < 0) { n = 0; }
+//   page = n;
+//   setGeoForPage(page);
+// }
 
 export function updateLine() {
-  setGeoForPage(page);
+  // setGeoForPage(page);
   lineMat.color = new THREE.Color(params.color);
 }
