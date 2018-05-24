@@ -113,11 +113,11 @@ function bufferToBinary(buf) {
   }, []);
 }
 
-
-function createLineGeo(bits, opts = { start:[0,0], startAngle:0, stepAngle:10, length:256 }) {
+// Position is (0,0) and initial angle 0 (east)
+function createLineGeo(bits, opts = { stepAngle:10, length:256 }) {
   let geo = new THREE.Geometry();
-  let p = new THREE.Vector3(opts.start[0], opts.start[1], 0); // turtle position
-  let a = opts.startAngle; // turtle angle
+  let p = new THREE.Vector3(); // turtle position
+  let a = 0; // turtle angle
   let r = opts.length / bits.length; // step length
   console.log("stepLength", r);
   geo.vertices.push(p.clone());
@@ -130,6 +130,7 @@ function createLineGeo(bits, opts = { start:[0,0], startAngle:0, stepAngle:10, l
     p.add(d);
     geo.vertices.push(p.clone());
   }
+  geo.lastVertex = p; // Save last vertex for convenience
   return geo;
 }
 
