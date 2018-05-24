@@ -6,5 +6,5 @@ export function create() {
   gui.addColor(params, 'color').onChange(updateLine);
   gui.add(params, 'startAngle', 0, 90).onChange(updateLine);
   gui.add(params, 'stepAngle', 0, 90).onChange(updateLine);
-  gui.add(params, 'stepLength', 0, 5).onChange(updateLine);
+  gui.add(params, 'length', 1, 512).onChange(updateLine);
 }

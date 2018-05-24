@@ -15,7 +15,7 @@ export let params = {
   start:[0,0], 
   startAngle:45, 
   stepAngle:10, 
-  stepLength:1
+  length:256
 };
 
 (async function main() {
@@ -114,17 +114,19 @@ function bufferToBinary(buf) {
 }
 
 
-function createLineGeo(bits, opts = { start:[0,0], startAngle:45, stepAngle:10, stepLength:1 }) {
+function createLineGeo(bits, opts = { start:[0,0], startAngle:0, stepAngle:10, length:256 }) {
   let geo = new THREE.Geometry();
   let p = new THREE.Vector3(opts.start[0], opts.start[1], 0); // turtle position
   let a = opts.startAngle; // turtle angle
+  let r = opts.length / bits.length; // step length
+  console.log("stepLength", r);
   geo.vertices.push(p.clone());
   for (let b of bits) {
     if (b) { a += opts.stepAngle; } else { a -= opts.stepAngle; } // adjust angle
     // move forward
     let arad = a / 360 * Math.PI * 2;
 
-    let d = new THREE.Vector3( opts.stepLength * Math.cos(arad), opts.stepLength * Math.sin(arad), 0 ); // direction vector
+    let d = new THREE.Vector3( r * Math.cos(arad), r * Math.sin(arad), 0 ); // direction vector
     p.add(d);
     geo.vertices.push(p.clone());
   }
