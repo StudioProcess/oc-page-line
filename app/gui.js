@@ -1,10 +1,13 @@
 /* globals dat */
-import { params, updateLine } from './main.js';
+import { params, reformatLine, regenerateLine } from './main.js';
 
 export function create() {
   let gui = new dat.GUI();
-  gui.addColor(params, 'color').onChange(updateLine);
-  gui.add(params, 'startAngle', 0, 90).onChange(updateLine);
-  gui.add(params, 'stepAngle', 0, 90).onChange(updateLine);
-  gui.add(params, 'length', 1, 512).onChange(updateLine);
+  gui.addColor(params, 'color').onChange(reformatLine);
+  gui.add(params, 'pages', 1, 300).onFinishChange(regenerateLine);
+  gui.add(params, 'stepAngle', 0, 90).onFinishChange(regenerateLine);
+  gui.add(params, 'length', 1, 100).onFinishChange(regenerateLine);
+  gui.add(params, 'join').onChange(reformatLine);
+  gui.add(params, 'gap', 0, 3).onChange(reformatLine);
+  gui.add(params, 'continueAngle').onChange(reformatLine);
 }

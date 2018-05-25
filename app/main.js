@@ -8,15 +8,17 @@ let controls; // eslint-disable-line no-unused-vars
 let buf;
 let line, lineMat;
 
-let pages = 125;
+// let pages = 125;
 // let page = 0;
 
 export let params = {
   color: 0x0f72ff,
-  start:[0,0],
-  startAngle:0,
-  stepAngle:10,
-  length:100,
+  pages: 125,
+  stepAngle: 10,
+  length: 22,
+  join: true,
+  gap: 0,
+  continueAngle: true,
 };
 
 (async function main() {
@@ -49,8 +51,8 @@ async function setup() {
   camera.position.z = 192;
 
   lineMat = new THREE.LineBasicMaterial({ color:params.color });
-  line = await getLineForBook(pages, lineMat);
-  formatLine();
+  line = await getLineForBook(params.pages, lineMat);
+  formatLine(params);
   scene.add( line );
 
 }
@@ -142,7 +144,7 @@ function createLineGeo(bits, opts = { stepAngle:10, length:256 }) {
 //   console.log(bits) ;
 // }
 
-async function getGeoForPage(n, totalPages=pages) {
+async function getGeoForPage(n, totalPages=params.pages) {
   console.log(buf);
   let bits = await hashPage(n, Math.floor(buf.byteLength/totalPages));
   return createLineGeo(bits, params);
@@ -169,6 +171,7 @@ function formatLine(opts = { join:true, gap:2, continueAngle:true }) {
       }
     }
     segment.position.set(position.x, position.y, position.z);
+    segment.rotation.set(0,0,0);
     if (opts.continueAngle && opts.join) { segment.rotateZ(angle); }
     lastGeo = segment.geometry;
   });
@@ -190,7 +193,16 @@ async function getLineForBook(totalPages, material) {
 //   setGeoForPage(page);
 // }
 
-export function updateLine() {
-  // setGeoForPage(page);
+export function reformatLine() {
+  formatLine(params);
   lineMat.color = new THREE.Color(params.color);
+}
+
+export function regenerateLine() {
+  getLineForBook(params.pages, lineMat).then(newline => {
+    scene.remove(line);
+    line = newline;
+    reformatLine();
+    scene.add(line);
+  });
 }
