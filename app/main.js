@@ -8,15 +8,15 @@ let controls; // eslint-disable-line no-unused-vars
 let buf;
 let line, lineMat;
 
-let pages = 3;
+let pages = 125;
 // let page = 0;
 
 export let params = {
   color: 0x0f72ff,
-  start:[0,0], 
-  startAngle:45, 
-  stepAngle:10, 
-  length:100
+  start:[0,0],
+  startAngle:0,
+  stepAngle:10,
+  length:100,
 };
 
 (async function main() {
@@ -43,7 +43,7 @@ async function setup() {
   document.body.appendChild( renderer.domElement );
   
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera( 75, W / H, 0.01, 1000 );
+  camera = new THREE.PerspectiveCamera( 75, W / H, 0.01, 5000 );
   controls = new THREE.OrbitControls( camera, renderer.domElement );
   controls.enableKeys = false;
   camera.position.z = 192;
@@ -130,8 +130,8 @@ function createLineGeo(bits, opts = { stepAngle:10, length:256 }) {
     p.add(d);
     geo.vertices.push(p.clone());
   }
-  geo.lastPosition = p; // Save last vertex position for convenience
-  geo.lastAngleRad = a / 360 * Math.PI * 2;
+  geo.direction = p; // Direction Vector (since the geo starts at [0,0] this corresponds to the last vertex)
+  geo.angle = a / 360 * Math.PI * 2;
   return geo;
 }
 
@@ -148,23 +148,28 @@ async function getGeoForPage(n, totalPages=pages) {
   return createLineGeo(bits, params);
 }
 
-// TODO: fix continueAngle feature
-function formatLine(opts = { join:true, gap:1, continueAngle:false }) {
+function formatLine(opts = { join:true, gap:2, continueAngle:true }) {
   let position = new THREE.Vector3();
   let angle = 0;
   let lastGeo;
+  
   line.children.forEach(segment => {
     if (lastGeo) {
-      if (opts.continueAngle) { angle += lastGeo.lastAngleRad; }
-      else { angle = lastGeo.lastAngleRad; }
+      // Calculate new position
       if (opts.join) {
-        // position.add( lastGeo.lastPosition.clone().applyEuler(new THREE.Euler(0,0,angle)) );
-        position.add(lastGeo.lastPosition);
-        position.add(new THREE.Vector3(opts.gap*Math.cos(angle),opts.gap*Math.sin(angle),0));
+        let dir = lastGeo.direction.clone();
+        if (opts.continueAngle) { dir.applyEuler(new THREE.Euler(0,0,angle)); } // Needs old angle
+        position.add(dir);
+      }
+      // Calculate new angle
+      angle = opts.continueAngle ? angle + lastGeo.angle : lastGeo.angle;
+      // Add gap
+      if (opts.join) {
+        position.add(new THREE.Vector3(opts.gap*Math.cos(angle),opts.gap*Math.sin(angle),0)); // Needs new angle
       }
     }
     segment.position.set(position.x, position.y, position.z);
-    if (opts.continueAngle) { segment.rotateZ(angle); }
+    if (opts.continueAngle && opts.join) { segment.rotateZ(angle); }
     lastGeo = segment.geometry;
   });
 }
