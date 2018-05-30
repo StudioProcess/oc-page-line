@@ -1,4 +1,5 @@
 import * as gui from './gui.js';
+import { SVG } from './svg.js';
 
 const W = 1280;
 const H = 800;
@@ -22,6 +23,11 @@ export let params = {
 };
 
 (async function main() {
+  
+  // let svg = new SVG();
+  // // svg.setSize(100, 100);
+  // svg.addPolyline([[0,0], [100,100], [10,50]], {stroke:'black', strokeWeight:'1px'});
+  // console.log( svg.getText() );
   
   await setup(); // set up scene
   loop(); // start game loop
