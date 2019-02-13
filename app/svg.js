@@ -1,22 +1,41 @@
-function svgElement(vars) {
-  vars = Object.assign( {viewBox: '', style: '', content: ''}, vars );
-  return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg width="100%" height="100%" viewBox="${vars.viewBox}" version="1.1" xmlns="http://www.w3.org/2000/svg"  style="${vars.style}">
-  ${vars.content}
-</svg>`;
+function attributes(attrs) {
+  let str = ' ';
+  for (let p of Object.keys(attrs)) {
+    str += `${camelCaseToDash(p)}="${attrs[p]}" `;
+  }
+  return str.trimRight();
 }
 
-function polylineElement(vars) {
-  vars = Object.assign( {points: '', style: ''}, vars );
-  return `<polyline points="${vars.points}" style="${vars.style}"/>`;
+function element(name, content = '', attrs = {}) {
+  return `<${name}${attributes(attrs)}>${content}</${name}>`
 }
+
+function svgElement(content = '', attrs = {}) {
+  let defaults = {
+    version: '1.1',
+    xmlns: 'http://www.w3.org/2000/svg',
+    viewBox: '',
+    style: ''
+  };
+  attrs = Object.assign( defaults, attrs );
+  return element('svg', content, attrs);
+}
+
+function polylineElement(attrs = {}) {
+  let defaults = {
+    points: '',
+    style: ''
+  };
+  attrs = Object.assign( defaults, attrs );
+  return element('polyline', '', attrs);
+}
+
 
 function camelCaseToDash(str) {
   return str.replace( /([a-z])([A-Z])/g, '$1-$2' ).toLowerCase();
 }
 
-function styleAttr(props) {
+function styleAttributeValue(props) {
   let str = '';
   for (let p of Object.keys(props)) {
     str += `${camelCaseToDash(p)}:${props[p]}; `;
@@ -24,7 +43,7 @@ function styleAttr(props) {
   return str.trimRight();
 }
 
-function pointsAttr(points) {
+function pointsAttributeValue(points) {
   let str = '';
   for (let p of points) {
     str += `${p[0]},${p[1]} `;
@@ -33,11 +52,29 @@ function pointsAttr(points) {
 }
 
 
+function saveURL(url, filename) {
+  let link = document.createElement('a');
+  link.download = filename;
+  link.href = url;
+  link.click();
+}
+
+function saveBlob(blob, filename) {
+  let url = URL.createObjectURL(blob);
+  saveURL(url, filename);
+  URL.revokeObjectURL(url);
+}
+
+function saveSVG(string, filename) {
+  let blob = new Blob( [string], {type: 'image/svg+xml'} );
+  saveBlob(blob, filename);
+}
+
 export class SVG {
   
-  constructor() {
-    this.w = 0;
-    this.h = 0;
+  constructor(w = 0, h = 0) {
+    this.w = w;
+    this.h = h;
     this.lines = [];
     this.style = {};
   }
@@ -61,14 +98,20 @@ export class SVG {
     for (let l of this.lines) {
       console.log(l);
       polylineElements.push(polylineElement({
-        points: pointsAttr(l.points),
-        style: styleAttr(l.style)
+        points: pointsAttributeValue(l.points),
+        style: styleAttributeValue(l.style)
       }));
     }
     
     let content = polylineElements.join('\n');
     let viewBox = !this.w || !this.h ? '' : `0 0 ${this.w} ${this.h}`;
-    return svgElement( {content, viewBox, style:this.style} );
+    return svgElement(content, {
+      viewBox,
+      style: styleAttributeValue(this.style)
+    });
   }
   
+  save(filename = 'download.svg') {
+    saveSVG(this.getText(), filename);
+  }
 }

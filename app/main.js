@@ -13,7 +13,7 @@ let line, lineMat;
 // let page = 0;
 
 export let params = {
-  color: 0x0f72ff,
+  color: 0x009CE1,
   pages: 125,
   stepAngle: 10,
   length: 22,
@@ -61,10 +61,21 @@ async function setup() {
   formatLine(params);
   scene.add( line );
 
+  // testSVG();
 }
 
+function testSVG() {
+  let style = { stroke: '#009CE1', fill:'none', strokeWidth:'3', strokeLinecap:'round', strokeLinejoin:'bevel' };
+  let svg = new SVG();
+  svg.setSize(100, 100);
+  svg.setStyle(style);
+  svg.addPolyline(
+    [ [0,100], [50,25], [50,75], [100,0] ]
+  );
+  svg.save();
+}
 
-function loop(time) { // eslint-disable-line no-unused-vars
+function loop(_time) { // eslint-disable-line no-unused-vars
   
   requestAnimationFrame( loop );
   renderer.render( scene, camera );
@@ -127,7 +138,7 @@ function createLineGeo(bits, opts = { stepAngle:10, length:256 }) {
   let p = new THREE.Vector3(); // turtle position
   let a = 0; // turtle angle
   let r = opts.length / bits.length; // step length
-  console.log("stepLength", r);
+  // console.log("stepLength", r);
   geo.vertices.push(p.clone());
   for (let b of bits) {
     if (b) { a += opts.stepAngle; } else { a -= opts.stepAngle; } // adjust angle
