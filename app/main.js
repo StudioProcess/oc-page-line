@@ -13,8 +13,11 @@ let line, lineMat;
 // let page = 0;
 
 export let params = {
-  color: 0x009CE1,
-  pages: 125,
+  color: '#009CE1',
+  lineWidth: 0.1,
+  lineCap: 'butt',
+  lineJoin: 'bevel',
+  pages: 1,
   stepAngle: 10,
   length: 22,
   join: true,
@@ -75,6 +78,20 @@ function testSVG() {
   svg.save();
 }
 
+function saveLine(lineobj) {
+  let style = { stroke:params.color, fill:'none', strokeWidth:params.lineWidth, strokeLinecap:params.lineCap, strokeLinejoin:params.lineJoin };
+  let svg = new SVG();
+  // svg.setSize(100, 100);
+  svg.setStyle(style);
+  
+  let points = lineobj.geometry.vertices.map(p => {
+    return [p.x, -p.y];
+  });
+  console.log(points)
+  svg.addPolyline(points);
+  svg.save();
+}
+
 function loop(_time) { // eslint-disable-line no-unused-vars
   
   requestAnimationFrame( loop );
@@ -94,6 +111,15 @@ document.addEventListener('keydown', e => {
   
   // else if (e.keyCode == 39) { setPage(page+1); } 
   // else if (e.keyCode == 37) { setPage(page-1); }
+  
+  else if (e.key == 'x') {
+    for (let l of line.children) {
+      // console.log(l);
+      // console.log(l.geometry.vertices)
+      saveLine(l);
+      return;
+    }
+  }
 });
 
 
@@ -123,7 +149,7 @@ async function hashPage(n, charsPerPage = 100) {
 
 function bufferToBinary(buf) {
   let arr = new Uint8Array(buf);
-  console.log(arr);
+  // console.log(arr);
   return arr.reduce( (acc, octet) => {
     for (let i=0; i<8; i++) {
       acc.push( (octet >> i) & 1 ); // NOTE: pushes bits LSB first
@@ -162,7 +188,7 @@ function createLineGeo(bits, opts = { stepAngle:10, length:256 }) {
 // }
 
 async function getGeoForPage(n, totalPages=params.pages) {
-  console.log(buf);
+  // console.log(buf);
   let bits = await hashPage(n, Math.floor(buf.byteLength/totalPages));
   return createLineGeo(bits, params);
 }
