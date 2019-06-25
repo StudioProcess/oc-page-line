@@ -6,17 +6,16 @@ const H = 800;
 
 let renderer, scene, camera;
 let controls; // eslint-disable-line no-unused-vars
-let buf;
+let data;
 let line, lineMat;
 
-// let pages = 125;
-// let page = 0;
 
 export let params = {
   color: '#009CE1',
   lineWidth: 0.1,
   lineCap: 'butt',
   lineJoin: 'bevel',
+  pageOffset: 0,
   pages: 1,
   stepAngle: 10,
   length: 22,
@@ -41,9 +40,8 @@ export let params = {
 async function setup() {
   gui.create();
   
-  buf = await readFile('app/alice30.txt');
-  // console.log(buf);
-
+  data = await getBookData();
+  
   renderer = new THREE.WebGLRenderer({
     antialias: true,
     alpha: true
@@ -60,7 +58,7 @@ async function setup() {
   camera.position.z = 192;
 
   lineMat = new THREE.LineBasicMaterial({ color:params.color });
-  line = await getLineForBook(params.pages, lineMat);
+  line = await getLineForBook(params.pageOffset, params.pages, lineMat);
   formatLine(params);
   scene.add( line );
 
@@ -98,7 +96,6 @@ function loop(_time) { // eslint-disable-line no-unused-vars
   renderer.render( scene, camera );
   
 }
-
 
 document.addEventListener('keydown', e => {
   // console.log(e.key, e.keyCode, e);
@@ -139,10 +136,25 @@ async function readFile(name) {
   return fetch(name).then( res => res.arrayBuffer() );
 }
 
+async function getSampleData() {
+  const numPages = 300;
+  let buf = await readFile('app/alice30.txt');
+  let charsPerPage = Math.floor(buf.byteLength/numPages);
+  let data = [];
+  for (let i=0; i<numPages; i++) {
+    let pageData = buf.slice( i*charsPerPage, (i+1)*charsPerPage );
+    data.push(pageData);
+  }
+  return data;
+}
 
-async function hashPage(n, charsPerPage = 100) {
-  let data = buf.slice( n*charsPerPage, (n+1)*charsPerPage );
-  return crypto.subtle.digest('SHA-256', data)
+// return book data as Array of pages, each page represented by the page data as ArrayBuffer
+async function getBookData() {
+  return await getSampleData();
+}
+
+async function hashPage(n) {
+  return crypto.subtle.digest('SHA-256', data[n])
     .then(buf => bufferToBinary(buf));
 }
 
@@ -187,9 +199,8 @@ function createLineGeo(bits, opts = { stepAngle:10, length:256 }) {
 //   console.log(bits) ;
 // }
 
-async function getGeoForPage(n, totalPages=params.pages) {
-  // console.log(buf);
-  let bits = await hashPage(n, Math.floor(buf.byteLength/totalPages));
+async function getGeoForPage(n) {
+  let bits = await hashPage( Math.floor(n) );
   return createLineGeo(bits, params);
 }
 
@@ -220,10 +231,10 @@ function formatLine(opts = { join:true, gap:2, continueAngle:true }) {
   });
 }
 
-async function getLineForBook(totalPages, material) {
+async function getLineForBook(pageOffset, totalPages, material) {
   let line = new THREE.Object3D();
   for (let i=0; i<totalPages; i++) {
-    let geo = await getGeoForPage(i, totalPages);
+    let geo = await getGeoForPage(pageOffset + i, totalPages);
     let segment = new THREE.Line( geo, material );
     line.add(segment);
   }
@@ -242,7 +253,7 @@ export function reformatLine() {
 }
 
 export function regenerateLine() {
-  getLineForBook(params.pages, lineMat).then(newline => {
+  getLineForBook(params.pageOffset, params.pages, lineMat).then(newline => {
     scene.remove(line);
     line = newline;
     reformatLine();
