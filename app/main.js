@@ -22,6 +22,7 @@ export let params = {
   join: true,
   gap: 0,
   continueAngle: true,
+  cameraZ: 192,
 };
 
 (async function main() {
@@ -59,7 +60,7 @@ async function setup() {
   camera = new THREE.PerspectiveCamera( 75, W / H, 0.01, 5000 );
   controls = new THREE.OrbitControls( camera, renderer.domElement );
   controls.enableKeys = false;
-  camera.position.z = 192;
+  camera.position.z = params.cameraZ;
 
   lineMat = new THREE.LineBasicMaterial({ color:params.color });
   line = await getLineForBook(params.pageOffset, params.pages, lineMat);
@@ -120,6 +121,11 @@ document.addEventListener('keydown', e => {
       saveLine(l);
       return;
     }
+  }
+  
+  else if (e.key == 'Backspace') {
+    camera.position.set(0, 0, params.cameraZ)
+    controls.update();
   }
 });
 
