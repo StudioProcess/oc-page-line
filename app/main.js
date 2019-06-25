@@ -31,6 +31,10 @@ export let params = {
   // svg.addPolyline([[0,0], [100,100], [10,50]], {stroke:'black', strokeWeight:'1px'});
   // console.log( svg.getText() );
   
+  // let data = await getPDFTextData();
+  // console.log(data);
+  // return;
+  
   await setup(); // set up scene
   loop(); // start game loop
 
@@ -134,23 +138,6 @@ document.addEventListener('keydown', e => {
 
 async function readFile(name) {
   return fetch(name).then( res => res.arrayBuffer() );
-}
-
-async function getSampleData() {
-  const numPages = 300;
-  let buf = await readFile('app/alice30.txt');
-  let charsPerPage = Math.floor(buf.byteLength/numPages);
-  let data = [];
-  for (let i=0; i<numPages; i++) {
-    let pageData = buf.slice( i*charsPerPage, (i+1)*charsPerPage );
-    data.push(pageData);
-  }
-  return data;
-}
-
-// return book data as Array of pages, each page represented by the page data as ArrayBuffer
-async function getBookData() {
-  return await getSampleData();
 }
 
 async function hashPage(n) {
@@ -259,4 +246,42 @@ export function regenerateLine() {
     reformatLine();
     scene.add(line);
   });
+}
+
+async function getSampleData() {
+  const numPages = 300;
+  let buf = await readFile('app/data/alice30.txt');
+  let charsPerPage = Math.floor(buf.byteLength/numPages);
+  let data = [];
+  for (let i=0; i<numPages; i++) {
+    let pageData = buf.slice( i*charsPerPage, (i+1)*charsPerPage );
+    data.push(pageData);
+  }
+  return data;
+}
+
+async function getPDFTextData(url) {
+  let pdf = await pdfjsLib.getDocument(url);
+  data = [];
+  for (let i=1; i<=pdf.numPages; i++) {
+    let pageData = await pdf.getPage(i);
+    // let ops = await pageData.getOperatorList();
+    // let ans = await pageData.getAnnotations();
+    // console.log(ops);
+    // console.log(ans);
+    let textData = await pageData.getTextContent();
+    let pageText = "";
+    textData.items.forEach(item => {
+      pageText += item.str + "\n";
+    });
+    pageText = pageText.trim();
+    data.push(Uint8Array.from(pageText).buffer);
+  }
+  return data;
+}
+
+// return book data as Array of pages, each page represented by the page data as ArrayBuffer
+async function getBookData() {
+  return await getSampleData();
+  // return await getPDFTextData('./app/data/27-Open-Codes_2019-06-25.pdf');
 }
