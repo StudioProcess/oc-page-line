@@ -272,6 +272,8 @@ async function getPDFTextData(url) {
   for (let i=1; i<=pdf.numPages; i++) {
     let pageData = await pdf.getPage(i);
     // let ops = await pageData.getOperatorList();
+    // list of operators: https://github.com/mozilla/pdf.js/blob/master/src/shared/util.js#L171
+    // operator definitions (annex a, p.643): https://www.adobe.com/content/dam/acom/en/devnet/pdf/pdfs/PDF32000_2008.pdf
     // let ans = await pageData.getAnnotations();
     // console.log(ops);
     // console.log(ans);
