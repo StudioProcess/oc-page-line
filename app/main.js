@@ -283,6 +283,7 @@ async function getPDFTextData(url) {
       pageText += item.str + "\n";
     });
     pageText = pageText.trim();
+    // data.push(Uint8Array.from(pageText).buffer);
     data.push(Uint8Array.from(pageText).buffer);
   }
   return data;
@@ -290,6 +291,42 @@ async function getPDFTextData(url) {
 
 // return book data as Array of pages, each page represented by the page data as ArrayBuffer
 async function getBookData() {
-  return await getSampleData();
-  // return await getPDFTextData('./app/data/27-Open-Codes_2019-06-25.pdf');
+  // return await getSampleData();
+  return await getPDFData('./app/data/27-Open-Codes_2019-06-25.pdf');
+}
+
+
+async function getPDFData(url) {
+  let pdf = await pdfjsLib.getDocument(url);
+  let dests = await pdf.getDestinations();
+  console.log(dests);
+  let dest = await pdf.getDestination('img_p0_1');
+  console.log(dest);
+  
+  data = [];
+  for (let i=1; i<=pdf.numPages; i++) {
+    let page = await pdf.getPage(i);
+    let ops = await page.getOperatorList();
+    // list of operators: https://github.com/mozilla/pdf.js/blob/master/src/shared/util.js#L171
+    // operator definitions (annex a, p.643): https://www.adobe.com/content/dam/acom/en/devnet/pdf/pdfs/PDF32000_2008.pdf
+    // text data: pdfjsLib.OPS.showText (44)
+    // image ref: pdfjsLib.OPS.paintJpegXObject (82), pdfjsLib.OPS.paintImageXObject (85)
+    // get image data from: page.objs.imageRef
+    console.log(`page ${i}`, page, ops);
+    let paintops = ops.fnArray.filter(op => op >= 82 && op <= 89);
+    if (paintops.length > 0) console.log(paintops);
+    // console.log(ans);
+    let textData = await page.getTextContent();
+    let pageText = "";
+    textData.items.forEach(item => {
+      pageText += item.str + "\n";
+    });
+    pageText = pageText.trim();
+    data.push(Uint8Array.from(pageText).buffer);
+    
+    // let pageData = Uint8Array.from([page.objs.objs, page.intentStates.operatorList]);
+    // console.log(pageData);
+    // data.push(pageData.buffer);
+  }
+  return data;
 }
