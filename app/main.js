@@ -17,6 +17,7 @@ export let params = {
   lineJoin: 'bevel',
   pageOffset: 0,
   pages: 1,
+  startAngle: 45,
   stepAngle: 10,
   length: 22,
   join: true,
@@ -60,6 +61,7 @@ async function setup() {
   camera = new THREE.PerspectiveCamera( 75, W / H, 0.01, 5000 );
   controls = new THREE.OrbitControls( camera, renderer.domElement );
   controls.enableKeys = false;
+  controls.screenSpacePanning = true;
   camera.position.z = params.cameraZ;
 
   lineMat = new THREE.LineBasicMaterial({ color:params.color });
@@ -167,7 +169,7 @@ function bufferToBinary(buf) {
 function createLineGeo(bits, opts = { stepAngle:10, length:256 }) {
   let geo = new THREE.Geometry();
   let p = new THREE.Vector3(); // turtle position
-  let a = 0; // turtle angle
+  let a = params.startAngle; // turtle angle
   let r = opts.length / bits.length; // step length
   // console.log("stepLength", r);
   geo.vertices.push(p.clone());
@@ -292,7 +294,7 @@ async function getPDFTextData(url) {
 // return book data as Array of pages, each page represented by the page data as ArrayBuffer
 async function getBookData() {
   // return await getSampleData();
-  return await getPDFData('./app/data/27-Open-Codes_2019-06-25.pdf');
+  return await getPDFTextData('./app/data/27-Open-Codes_2019-06-25.pdf');
 }
 
 
