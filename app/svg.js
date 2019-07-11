@@ -73,41 +73,57 @@ function saveSVG(string, filename) {
 export class SVG {
   
   constructor(w = 0, h = 0) {
-    this.w = w;
-    this.h = h;
+    this.left = 0;
+    this.top = 0;
+    this.width = w;
+    this.height = h;
     this.lines = [];
     this.style = {};
+    this.transform = "";
   }
   
   setSize(w, h) {
-    this.w = w;
-    this.h = h;
+    this.width = w;
+    this.height = h;
+  }
+  
+  setViewBox(l, t, w, h) {
+    this.left = l;
+    this.top = t;
+    this.width = w;
+    this.height = h;
   }
   
   setStyle(style) {
     this.style = style;
   }
   
+  setTransform(transform) {
+    this.transform = transform;
+  }
+  
   // points specified as: [[x0,y0], [x1, y1], ...]
-  addPolyline(points, style={}) {
-    this.lines.push( {points, style} );
+  addPolyline(points, style={}, transform="") {
+    this.lines.push( {points, style, transform} );
   }
   
   getText() {
     let polylineElements = [];
     for (let l of this.lines) {
-      console.log(l);
+      // console.log(l);
       polylineElements.push(polylineElement({
         points: pointsAttributeValue(l.points),
-        style: styleAttributeValue(l.style)
+        style: styleAttributeValue(l.style),
+        transform: l.transform
       }));
     }
     
     let content = polylineElements.join('\n');
-    let viewBox = !this.w || !this.h ? '' : `0 0 ${this.w} ${this.h}`;
+    let viewBox = !this.width || !this.height ? '' : `${this.left} ${this.top} ${this.width} ${this.height}`;
     return svgElement(content, {
       viewBox,
-      style: styleAttributeValue(this.style)
+      transform: this.transform,
+      style: styleAttributeValue(this.style),
     });
   }
   

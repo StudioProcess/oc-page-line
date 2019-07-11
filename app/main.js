@@ -1,8 +1,13 @@
 import * as gui from './gui.js';
 import { SVG } from './svg.js';
 
-const W = 1280;
-const H = 800;
+
+// page dimensions in mm
+const pageW = 330;
+const pageH = 230;
+
+const W = pageW / 25.4 * 72; // page width in pts
+const H = pageH / 25.4 * 72; // page height in pts
 
 let renderer, scene, camera;
 let controls; // eslint-disable-line no-unused-vars
@@ -17,13 +22,14 @@ export let params = {
   lineJoin: 'bevel',
   pageOffset: 0,
   pages: 1,
-  startAngle: 45,
-  stepAngle: 10,
-  length: 22,
+  startAngle: 35,
+  stepAngle: 5,
+  length: 800,
   join: true,
   gap: 0,
-  continueAngle: true,
-  cameraZ: 192,
+  continueAngle: false,
+  cameraZ: 500,
+  centerOnPage: true,
 };
 
 (async function main() {
@@ -83,18 +89,38 @@ function testSVG() {
   svg.save();
 }
 
-function saveLine(lineobj) {
+function saveLine(lineobj, filename) {
   let style = { stroke:params.color, fill:'none', strokeWidth:params.lineWidth, strokeLinecap:params.lineCap, strokeLinejoin:params.lineJoin };
   let svg = new SVG();
-  // svg.setSize(100, 100);
   svg.setStyle(style);
   
+  // bounding box
+  let x_min = Infinity, x_max = -Infinity;
+  let y_min = Infinity, y_max = -Infinity;
+  
   let points = lineobj.geometry.vertices.map(p => {
-    return [p.x, -p.y];
+    let x = p.x, y = -p.y;
+    if (x < x_min) x_min = x;
+    if (x > x_max) x_max = x;
+    if (y < y_min) y_min = y;
+    if (y > y_max) y_max = y;
+    return [x, y];
   });
-  console.log(points)
-  svg.addPolyline(points);
-  svg.save();
+
+  if (params.centerOnPage) {
+    let w = pageW / 25.4 * 72; 
+    let h = pageH / 25.4 * 72; // page height in pts
+    let dx = W/2 - (x_max-x_min)/2 - x_min;
+    let dy = H/2 - (y_max-y_min)/2 - y_min;
+    // svg.setTransform(`translate(${dx} ${dy})`);
+    svg.addPolyline(points, {}, `translate(${dx} ${dy})`);
+  } else {
+    svg.addPolyline(points);
+  }
+  
+  // console.log(points)
+
+  svg.save(filename);
 }
 
 function loop(_time) { // eslint-disable-line no-unused-vars
@@ -117,16 +143,20 @@ document.addEventListener('keydown', e => {
   // else if (e.keyCode == 37) { setPage(page-1); }
   
   else if (e.key == 'x') {
-    for (let l of line.children) {
+    for (let [i, l] of line.children.entries()) {
       // console.log(l);
       // console.log(l.geometry.vertices)
-      saveLine(l);
-      return;
+      saveLine(l, 'line-' + (''+i+1).padStart(3, '0') + '.svg');
     }
   }
   
   else if (e.key == 'Backspace') {
+    console.log(controls);
     camera.position.set(0, 0, params.cameraZ)
+    camera.rotation.set(0, 0, 0);
+    controls.position0.set(0,0,0);
+    controls.target0.set(0,0,0);
+    controls.target.set(0,0,0);
     controls.update();
   }
 });
