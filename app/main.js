@@ -68,6 +68,8 @@ async function setup() {
   controls = new THREE.OrbitControls( camera, renderer.domElement );
   controls.enableKeys = false;
   controls.screenSpacePanning = true;
+  controls.mouseButtons.LEFT = THREE.MOUSE.RIGHT;
+  controls.mouseButtons.RIGHT = THREE.MOUSE.LEFT;
   camera.position.z = params.cameraZ;
 
   lineMat = new THREE.LineBasicMaterial({ color:params.color });
