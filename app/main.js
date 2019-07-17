@@ -114,22 +114,13 @@ function saveLine(lineobj, filename) {
   let svg = new SVG();
   svg.setStyle(style);
   
-  // bounding box
-  let x_min = Infinity, x_max = -Infinity;
-  let y_min = Infinity, y_max = -Infinity;
-  
   let points = lineobj.geometry.vertices.map(p => {
-    let x = p.x, y = -p.y;
-    if (x < x_min) x_min = x;
-    if (x > x_max) x_max = x;
-    if (y < y_min) y_min = y;
-    if (y > y_max) y_max = y;
-    return [x, y];
+    return [p.x, -p.y];
   });
-
+  
   if (params.centerOnPage) {
-    let dx = W/2 - (x_max-x_min)/2 - x_min;
-    let dy = H/2 - (y_max-y_min)/2 - y_min;
+    let dx = lineobj.geometry.bbPosition.x;
+    let dy = H - lineobj.geometry.bbPosition.y;
     // svg.setTransform(`translate(${dx} ${dy})`);
     svg.addPolyline(points, {}, `translate(${dx} ${dy})`);
   } else {
@@ -137,7 +128,6 @@ function saveLine(lineobj, filename) {
   }
   
   // console.log(points)
-
   svg.save(filename);
 }
 
@@ -164,7 +154,7 @@ document.addEventListener('keydown', e => {
     for (let [i, l] of line.children.entries()) {
       // console.log(l);
       // console.log(l.geometry.vertices)
-      saveLine(l, 'line-' + (''+i+1).padStart(3, '0') + '.svg');
+      saveLine(l, 'line-' + (''+(i+1)).padStart(3, '0') + '.svg');
     }
   }
   
