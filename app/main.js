@@ -232,6 +232,20 @@ function createLineGeo(bits, opts = { stepAngle:10, length:256 }) {
   }
   geo.direction = p; // Direction Vector (since the geo starts at [0,0] this corresponds to the last vertex)
   geo.angle = a / 360 * Math.PI * 2;
+  
+  // bounding box calculation
+  let x_min = Infinity, x_max = -Infinity;
+  let y_min = Infinity, y_max = -Infinity;
+  geo.vertices.forEach(p => {
+    if (p.x < x_min) x_min = p.x;
+    if (p.x > x_max) x_max = p.x;
+    if (p.y < y_min) y_min = p.y;
+    if (p.y > y_max) y_max = p.y;
+  });
+  let dx = W/2 - (x_max-x_min)/2 - x_min;
+  let dy = H/2 - (y_max-y_min)/2 - y_min;
+  geo.bbPosition = new THREE.Vector3(dx, dy, 0);
+  
   return geo;
 }
 
@@ -268,6 +282,9 @@ function formatLine(opts = { join:true, gap:2, continueAngle:true }) {
       }
     }
     segment.position.set(position.x, position.y, position.z);
+    if (params.centerOnPage) {
+      segment.position.add(segment.geometry.bbPosition);
+    }
     segment.rotation.set(0,0,0);
     if (opts.continueAngle && opts.join) { segment.rotateZ(angle); }
     lastGeo = segment.geometry;
@@ -279,6 +296,8 @@ async function getLineForBook(pageOffset, totalPages, material) {
   for (let i=0; i<totalPages; i++) {
     let geo = await getGeoForPage(pageOffset + i, totalPages);
     let segment = new THREE.Line( geo, material );
+      segment.position.x = 100;
+    console.log(segment.position);
     line.add(segment);
   }
   return line;
