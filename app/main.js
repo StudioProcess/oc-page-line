@@ -26,8 +26,10 @@ export let params = {
   startAngle: 35,
   stepAngle: 5,
   length: 800,
-  join: true,
+  join: false,
+  compose: 'none',
   gap: 0,
+  gridWidth: 0,
   continueAngle: false,
   cameraZ: 750,
   centerOnPage: true,
@@ -65,7 +67,7 @@ async function setup() {
   document.body.appendChild( renderer.domElement );
   
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera( 75, W / H, 0.01, 5000 );
+  camera = new THREE.PerspectiveCamera( 75, W / H, 0.01, 999999 );
   controls = new THREE.OrbitControls( camera, renderer.domElement );
   controls.enableKeys = false;
   controls.screenSpacePanning = true;
@@ -251,15 +253,15 @@ async function getGeoForPage(n) {
   return createLineGeo(bits, params);
 }
 
-function formatLine(opts = { join:true, gap:2, continueAngle:true }) {
+function formatLine(opts = { compose:'join', gap:2, continueAngle:true }) {
   let position = new THREE.Vector3();
   let angle = 0;
   let lastGeo;
   
-  line.children.forEach(segment => {
+  line.children.forEach((segment, i) => {
     if (lastGeo) {
       // Calculate new position
-      if (opts.join) {
+      if (opts.compose == 'join') {
         let dir = lastGeo.direction.clone();
         if (opts.continueAngle) { dir.applyEuler(new THREE.Euler(0,0,angle)); } // Needs old angle
         position.add(dir);
@@ -267,16 +269,21 @@ function formatLine(opts = { join:true, gap:2, continueAngle:true }) {
       // Calculate new angle
       angle = opts.continueAngle ? angle + lastGeo.angle : lastGeo.angle;
       // Add gap
-      if (opts.join) {
+      if (opts.compose == 'join') {
         position.add(new THREE.Vector3(opts.gap*Math.cos(angle),opts.gap*Math.sin(angle),0)); // Needs new angle
       }
     }
-    segment.position.set(position.x, position.y, position.z);
+    if (opts.compose == 'grid') {
+      let x = params.gridWidth > 0 ? i % params.gridWidth : i;
+      let y = params.gridWidth > 0 ? Math.floor(i / params.gridWidth) : 0;
+      position.set((W + opts.gap)*x, -(H + opts.gap)*y, 0 );
+    }
+    segment.position.copy(position);
     if (params.centerOnPage) {
       segment.position.add(segment.geometry.bbPosition);
     }
     segment.rotation.set(0,0,0);
-    if (opts.continueAngle && opts.join) { segment.rotateZ(angle); }
+    if (opts.continueAngle && opts.compose == 'join') { segment.rotateZ(angle); }
     lastGeo = segment.geometry;
   });
 }
@@ -287,7 +294,6 @@ async function getLineForBook(pageOffset, totalPages, material) {
     let geo = await getGeoForPage(pageOffset + i, totalPages);
     let segment = new THREE.Line( geo, material );
       segment.position.x = 100;
-    console.log(segment.position);
     line.add(segment);
   }
   return line;

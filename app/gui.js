@@ -9,8 +9,9 @@ export function create() {
   gui.add(params, 'startAngle', -90, 90).onFinishChange(regenerateLine);
   gui.add(params, 'stepAngle', 0, 20).onFinishChange(regenerateLine);
   gui.add(params, 'length', 10, 1000).onFinishChange(regenerateLine);
-  gui.add(params, 'join').onChange(reformatLine);
-  gui.add(params, 'gap', 0, 10).onChange(reformatLine);
+  gui.add(params, 'compose', ['none', 'join', 'grid']).onChange(reformatLine);
+  gui.add(params, 'gap', 0, 100).onChange(reformatLine);
+  gui.add(params, 'gridWidth', 0, 200).onChange(reformatLine);
   gui.add(params, 'continueAngle').onChange(reformatLine);
   gui.add(params, 'centerOnPage').onChange(reformatLine);
 }
