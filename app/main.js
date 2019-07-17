@@ -13,6 +13,7 @@ let renderer, scene, camera;
 let controls; // eslint-disable-line no-unused-vars
 let data;
 let line, lineMat;
+let page, pageMat;
 
 
 export let params = {
@@ -28,7 +29,7 @@ export let params = {
   join: true,
   gap: 0,
   continueAngle: false,
-  cameraZ: 500,
+  cameraZ: 750,
   centerOnPage: true,
 };
 
@@ -77,7 +78,24 @@ async function setup() {
   formatLine(params);
   scene.add( line );
 
+  // Page reference
+  pageMat = new THREE.LineBasicMaterial({ color:'#bbbbbb' });
+  page = new THREE.LineLoop( pageGeo(), pageMat );
+  scene.add( page );
+  scene.position.set(-W/2, -H/2, 0);
+  
   // testSVG();
+}
+
+function pageGeo() {
+  let geo = new THREE.Geometry();
+  geo.vertices.push(
+    new THREE.Vector3( 0, 0, 0 ),
+    new THREE.Vector3( W, 0, 0 ),
+    new THREE.Vector3( W, H, 0 ),
+    new THREE.Vector3( 0, H, 0 ),
+  );
+  return geo;
 }
 
 function testSVG() {
@@ -110,8 +128,6 @@ function saveLine(lineobj, filename) {
   });
 
   if (params.centerOnPage) {
-    let w = pageW / 25.4 * 72; 
-    let h = pageH / 25.4 * 72; // page height in pts
     let dx = W/2 - (x_max-x_min)/2 - x_min;
     let dy = H/2 - (y_max-y_min)/2 - y_min;
     // svg.setTransform(`translate(${dx} ${dy})`);
