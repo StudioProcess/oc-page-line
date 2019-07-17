@@ -14,4 +14,6 @@ export function create() {
   gui.add(params, 'gridWidth', 0, 200).onChange(reformatLine);
   gui.add(params, 'continueAngle').onChange(reformatLine);
   gui.add(params, 'centerOnPage').onChange(reformatLine);
+  gui.add(params, 'exportSVGPages');
+  gui.add(params, 'exportSVGComposite');
 }

@@ -33,6 +33,8 @@ export let params = {
   continueAngle: false,
   cameraZ: 750,
   centerOnPage: true,
+  exportSVGPages: () => exportSVGPages(),
+  exportSVGComposite: () => exportSVGComposite(),
 };
 
 (async function main() {
@@ -111,18 +113,16 @@ function testSVG() {
   svg.save();
 }
 
-function saveLine(lineobj, filename) {
+function exportLine(lineobj, filename) {
   let style = { stroke:params.color, fill:'none', strokeWidth:params.lineWidth, strokeLinecap:params.lineCap, strokeLinejoin:params.lineJoin };
   let svg = new SVG();
   svg.setStyle(style);
   
-  let points = lineobj.geometry.vertices.map(p => {
-    return [p.x, -p.y];
-  });
+  let points = lineobj.geometry.vertices.map(p => [p.x, H-p.y]);
   
   if (params.centerOnPage) {
     let dx = lineobj.geometry.bbPosition.x;
-    let dy = H - lineobj.geometry.bbPosition.y;
+    let dy = -lineobj.geometry.bbPosition.y;
     // svg.setTransform(`translate(${dx} ${dy})`);
     svg.addPolyline(points, {}, `translate(${dx} ${dy})`);
   } else {
@@ -131,6 +131,25 @@ function saveLine(lineobj, filename) {
   
   // console.log(points)
   svg.save(filename);
+}
+
+function exportSVGPages() {
+  for (let [i, l] of line.children.entries()) {
+    exportLine(l, 'line-' + (''+(i+1)).padStart(3, '0') + '.svg');
+  }
+}
+
+function exportSVGComposite() {
+  let style = { stroke:params.color, fill:'none', strokeWidth:params.lineWidth, strokeLinecap:params.lineCap, strokeLinejoin:params.lineJoin };
+  let svg = new SVG();
+  svg.setStyle(style);
+  for (let [i, l] of line.children.entries()) {
+    let points = l.geometry.vertices.map(p => [p.x, H-p.y]);
+    let dx = l.position.x;
+    let dy = -l.position.y;
+    svg.addPolyline(points, {}, `translate(${dx} ${dy})`);
+  }
+  svg.save("line-comp.svg");
 }
 
 function loop(_time) { // eslint-disable-line no-unused-vars
@@ -153,11 +172,7 @@ document.addEventListener('keydown', e => {
   // else if (e.keyCode == 37) { setPage(page-1); }
   
   else if (e.key == 'x') {
-    for (let [i, l] of line.children.entries()) {
-      // console.log(l);
-      // console.log(l.geometry.vertices)
-      saveLine(l, 'line-' + (''+(i+1)).padStart(3, '0') + '.svg');
-    }
+    exportSVGPages();
   }
   
   else if (e.key == 'Backspace') {
@@ -268,7 +283,7 @@ function formatLine(opts = { compose:'join', gap:2, continueAngle:true }) {
       }
       // Calculate new angle
       angle = opts.continueAngle ? angle + lastGeo.angle : lastGeo.angle;
-      // Add gap
+      // Add gap (in direction of new angle)
       if (opts.compose == 'join') {
         position.add(new THREE.Vector3(opts.gap*Math.cos(angle),opts.gap*Math.sin(angle),0)); // Needs new angle
       }
